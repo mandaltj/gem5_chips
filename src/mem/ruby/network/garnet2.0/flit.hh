@@ -105,8 +105,12 @@ class flit
 
     bool functionalWrite(Packet *pkt);
 
-    virtual flit* serialize(int ser_id, int parts, uint32_t bWidth);
-    virtual flit* deserialize(int des_id, int num_flits, uint32_t bWidth);
+    //virtual flit* serialize(int ser_id, int parts, uint32_t bWidth);
+    //virtual flit* deserialize(int des_id, int num_flits, uint32_t bWidth);
+
+    //Change:
+    virtual flit* serialize(int ser_id, int num_phits, uint32_t bWidth);
+    virtual flit* deserialize(int des_id, int num_phits, uint32_t bWidth);
 
     uint32_t m_width;
     int msgSize;

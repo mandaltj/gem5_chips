@@ -89,6 +89,8 @@ NetworkLink::wakeup()
                 (std::find(mVnets.begin(), mVnets.end(), -1) != mVnets.end()));
         }
         t_flit->set_time(clockEdge(m_latency));
+        DPRINTF(RubyNetwork, "getTopFlit:%s\n", *t_flit);
+
         linkBuffer->insert(t_flit);
         link_consumer->scheduleEventAbsolute(clockEdge(m_latency));
         m_link_utilized++;

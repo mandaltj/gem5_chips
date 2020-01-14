@@ -78,7 +78,6 @@ void
 CLIP::scheduleFlit(flit *t_flit, Cycles latency)
 {
     Cycles totLatency = latency + phyIfcLatency;
-
     t_flit->set_time(link_consumer->getObject()->clockEdge(totLatency));
     linkBuffer->insert(t_flit);
     link_consumer->scheduleEvent(totLatency);
@@ -110,72 +109,33 @@ CLIP::flitisizeAndSend(flit *t_flit)
         int vc = t_flit->get_vc();
 
         if (target_width > cur_width) {
-            // Deserialize
-            // This deserializer combines flits from the
-            // same message together
             // TODO: Allow heterogenous flits
-            int num_flits = 0;
-            if (t_flit->get_type() == CREDIT_) {
-                num_flits = (int)ceil((float)target_width/(float)cur_width);
-            } else if ((t_flit->get_type() == TAIL_ ||
-                       t_flit->get_type() == HEAD_TAIL_)
-                       && lenBuffer[vc]==0) {
-                num_flits = 1;
-            } else {
-                num_flits = (int)ceil((float)std::min((t_flit->msgSize)*8,
-                                       target_width)/(float)cur_width);
-            }
-            assert(num_flits > 0);
-
-            DPRINTF(RubyNetwork, "Deserialize :%d -----> %d "
-                "num-flits-needed:%d vc:%d\n",
-                cur_width, target_width, num_flits, vc);
+            int num_incoming_phits = (int)ceil((float)target_width/(float)cur_width);
 
             // lenBuffer acts as the buffer for deserialization
-
             lenBuffer[vc]++;
-            flit *fl = t_flit->deserialize(lenBuffer[vc], num_flits,
-                target_width);
-
-            if (t_flit->get_type() != CREDIT_ && fl) {
-                coBridge->neutralize(vc, num_flits);
-            }
+            flit *fl = t_flit->deserialize(lenBuffer[vc], num_incoming_phits, target_width);
 
             // Schedule only if we are done deserializing
             if (fl) {
-                DPRINTF(RubyNetwork, "Scheduling a flit\n");
                 lenBuffer[vc] = 0;
                 scheduleFlit(fl, logIfcLatency);
             }
             // Delete this flit, new flit is sent in any case
             delete t_flit;
+
         } else {
             // Serialize
-            DPRINTF(RubyNetwork, "Serializing flit :%d -----> %d "
-            "(vc:%d, Original Message Size: %d)\n",
-                cur_width, target_width, vc, t_flit->msgSize);
+            int num_outgoing_phits = (int)ceil((float)cur_width/(float)target_width);
 
-            int num_parts = 0;
-            if (t_flit->get_type() == CREDIT_) {
-                assert(extraCredit[vc].front());
-                num_parts = extraCredit[vc].front();
-                extraCredit[vc].pop();
-            } else {
-                num_parts = (int)ceil((float)cur_width/
-                            (float)target_width);
-            }
-            assert(num_parts > 0);
-
-            DPRINTF(RubyNetwork, "Serialized into %d parts\n", num_parts);
-            // Schedule all the flits
-            // num_flits could be zero for credits
-            for (int i = 0; i < num_parts; i++) {
-                // Ignore neutralized credits
-                flit *fl = t_flit->serialize(i, num_parts, target_width);
+            //for (int i = 0; i < num_parts; i++) {
+            for (int i = 0; i < num_outgoing_phits; i++) {
+                flit *fl = t_flit->serialize(i+1, num_outgoing_phits, target_width);
                 scheduleFlit(fl, logIfcLatency);
             }
             // Delete this flit, new flit is sent in any case
             delete t_flit;
+
         }
         return;
     }

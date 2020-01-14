@@ -64,35 +64,27 @@ flit::flit(int id, int  vc, int vnet, RouteInfo route, int size,
 }
 
 flit *
-flit::serialize(int ser_id, int parts, uint32_t bWidth)
+flit::serialize(int ser_id, int num_phits, uint32_t bWidth)
 {
     assert(m_width > bWidth);
 
-    // Assuming all flits get broken into equal parts
-    int new_id = (m_id*parts) + ser_id;
-    int new_size = m_size*parts;
-
-    flit *fl = new flit(new_id, m_vc, m_vnet, m_route,
-                    new_size, m_msg_ptr, msgSize, bWidth, m_time);
+    flit *fl = new flit(m_id, m_vc, m_vnet, m_route,
+                    m_size, m_msg_ptr, msgSize, bWidth, m_time);
     fl->set_enqueue_time(m_enqueue_time);
     fl->set_src_delay(src_delay);
     return fl;
 }
 
 flit *
-flit::deserialize(int des_id, int num_flits, uint32_t bWidth)
+flit::deserialize(int des_id, int num_phits, uint32_t bWidth)
 {
-    if ((m_type == HEAD_ || m_type == BODY_) &&
-       ((m_id + 1) % num_flits)) {
+
+    if (des_id != num_phits){
         return NULL;
     }
+    flit *fl = new flit(m_id, m_vc, m_vnet, m_route,
+                    m_size, m_msg_ptr, msgSize, bWidth, m_time);
 
-    // Assuming all flits are joined into equal parts
-    int new_id = (int) floor((float)m_id/(float)num_flits);
-    int new_size = (int) ceil((float)m_size/(float)num_flits);
-
-    flit *fl = new flit(new_id, m_vc, m_vnet, m_route,
-                    new_size, m_msg_ptr, msgSize, bWidth, m_time);
     fl->set_enqueue_time(m_enqueue_time);
     fl->set_src_delay(src_delay);
     return fl;

@@ -42,36 +42,34 @@ Credit::Credit(int vc, bool is_free_signal, Tick curTime)
     m_id = 0;
     m_vc = vc;
     m_is_free_signal = is_free_signal;
+    m_enqueue_time = curTime;
     m_time = curTime;
     m_type = CREDIT_;
 }
 
 flit *
-Credit::serialize(int ser_id, int parts, uint32_t bWidth)
+Credit::serialize(int ser_id, int num_phits, uint32_t bWidth)
 {
     DPRINTF(RubyNetwork, "Serializing a credit\n");
     bool new_free = false;
-    if ((ser_id+1 == parts) && m_is_free_signal) {
+    if ((ser_id == num_phits) && m_is_free_signal){
         new_free = true;
     }
     Credit *new_credit_flit = new Credit(m_vc, new_free, m_time);
+    new_credit_flit->m_id=ser_id;
     return new_credit_flit;
 }
 
 flit *
-Credit::deserialize(int des_id, int num_flits, uint32_t bWidth)
+Credit::deserialize(int des_id, int num_phits, uint32_t bWidth)
 {
-    DPRINTF(RubyNetwork, "DeSerializing a credit vc:%d free:%d\n",
-    m_vc, m_is_free_signal);
-    if (m_is_free_signal) {
-        // We are not going to get anymore credits for this vc
-        // So send a credit in any case
-        return new Credit(m_vc, true, m_time);
+    if (des_id == num_phits){
+        if (m_is_free_signal){
+            return new Credit(m_vc, true, m_time);
+        }
+        else{
+            return new Credit(m_vc, false, m_time);
+        }
     }
-    if (des_id % num_flits) {
-        return NULL;
-    }
-
-    return new Credit(m_vc, false, m_time);
+    return NULL;
 }
-

@@ -32,7 +32,7 @@
 
 
 #include "mem/ruby/network/garnet2.0/OutVcState.hh"
-
+#include "debug/RubyNetwork.hh"
 #include "mem/ruby/system/RubySystem.hh"
 
 OutVcState::OutVcState(int id, GarnetNetwork *network_ptr)
@@ -54,6 +54,10 @@ void
 OutVcState::increment_credit()
 {
     m_credit_count++;
+    if(m_credit_count > m_max_credit_count){
+        DPRINTF(RubyNetwork, "Error: m_credit_count=%d m_max_credit_count=%d\n",
+        m_credit_count, m_max_credit_count);    
+    }
     assert(m_credit_count <= m_max_credit_count);
 }
 
