@@ -55,8 +55,15 @@ Credit::serialize(int ser_id, int num_phits, uint32_t bWidth)
     if ((ser_id == num_phits) && m_is_free_signal){
         new_free = true;
     }
+
     Credit *new_credit_flit = new Credit(m_vc, new_free, m_time);
+
+    //m_id needs some kind of serialization otherwise the order of flits gets
+    //messed up inside flitBuffer.
+    //std::push_heap(m_buffer.begin(), m_buffer.end(), flit::greater);
+    //Use of push_heap needs the flit::greater which uses "m_id"
     new_credit_flit->m_id=ser_id;
+
     return new_credit_flit;
 }
 

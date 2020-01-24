@@ -68,7 +68,11 @@ flit::serialize(int ser_id, int num_phits, uint32_t bWidth)
 {
     assert(m_width > bWidth);
 
-    flit *fl = new flit(m_id, m_vc, m_vnet, m_route,
+    //Using ser_id for m_id. Serialization of m_id is needed to maintain order
+    //of phits in the flitBuffer
+    //std::push_heap(m_buffer.begin(), m_buffer.end(), flit::greater);
+    //Use of push_heap needs the flit::greater which uses "m_id"
+    flit *fl = new flit(ser_id, m_vc, m_vnet, m_route,
                     m_size, m_msg_ptr, msgSize, bWidth, m_time);
     fl->set_enqueue_time(m_enqueue_time);
     fl->set_src_delay(src_delay);
